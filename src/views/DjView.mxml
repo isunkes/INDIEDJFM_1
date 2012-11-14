@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="{data.djName}"
+		backgroundColor="black"
+		creationComplete="view1_creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import events.Close;
+			import events.NowPlaying;
+			import events.CheckNetworkConnection;
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				this.dispatchEvent(new CheckNetworkConnection(CheckNetworkConnection.CHECK_NETWORK_STATUS,true));
+				if(data.imageSmall != null)
+				{
+					djImage.source = data.imageSmall;
+				}
+				else
+				{
+					djImage.source = 'assets/placeHolderDJBig.png'
+				}
+				if (Capabilities.version.indexOf("IOS") == 0)
+				{
+					closeButton.visible = false;
+					closeButton.height = 0;
+				}
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				navigator.pushView(views.MixesView, data);
+			}
+			
+			protected function backButton_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				navigator.popView();
+			}
+			protected function closeButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new Close(Close.CLOSE_APP,true));
+			}
+			
+			protected function nowPlayingButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new NowPlaying(NowPlaying.NOW_PLAYING,true));
+			}
+			
+			protected function aboutButton_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.AboutView);
+				
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:navigationContent>
+		<s:Button id="backButton" label="back" fontSize="24" fontWeight="normal" click="backButton_clickHandler(event)"/>
+	</s:navigationContent>
+	<s:actionContent>
+		<s:CalloutButton x="5" width="67" fontSize="22" fontWeight="normal"
+						 icon="assets/sliders30.png" styleName="calloutButtonStyle">
+			
+			<s:calloutLayout>
+				<s:VerticalLayout paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10" horizontalAlign="center" gap="5"/>
+			</s:calloutLayout>
+			<s:calloutContent  >
+				<s:Button id="aboutButton"  label="IndieDJ.FM" fontSize="40" width="250" height="60" fontWeight="normal"
+						  click="aboutButton_clickHandler(event)" icon="assets/59-info.png"/>
+				<s:Button id="nowPlayingButton"  label="Now Playing" fontSize="40" width="250" height="60" fontWeight="normal"
+						  click="nowPlayingButton_clickHandler(event)" icon="assets/36-circle-play.png"/>
+				<s:Button id="closeButton"  label="Exit" width="{nowPlayingButton.width}" fontSize="40" height="60" fontWeight="normal" 
+						  click="closeButton_clickHandler(event)" icon="assets/57-power.png"/>
+			</s:calloutContent>	
+		</s:CalloutButton>
+	</s:actionContent>
+
+
+<s:VGroup width="100%" height="100%" horizontalAlign="center">
+	
+	
+	<s:Scroller width="100%" height="100%">
+		<s:VGroup width="100%" height="100%" gap="0" horizontalAlign="center">
+			<s:Spacer width="10" height="10"/>
+			<s:BorderContainer width="95%" height="219" borderStyle="inset" borderWeight="4"
+							   cornerRadius="10" dropShadowVisible="false" textAlign="left">
+				<s:backgroundFill>
+					<!-- 0 rotation creates left to right gradient -->
+					<s:LinearGradient rotation="90">
+						<s:GradientEntry color="0x434343"/>
+						<s:GradientEntry color="0x434343"/>
+						<s:GradientEntry color="0x434343"/>
+						<s:GradientEntry color="0x343434"/>
+						<s:GradientEntry color="0x343434"/>
+						
+					</s:LinearGradient>
+				</s:backgroundFill>	
+				<s:Image id="djImage" x="21" y="21" width="171" height="170" scaleMode="stretch" smooth="true"
+						 smoothingQuality="high" source="assets/placeHolderDJBig.png"  />
+				
+				<s:Label x="236" y="127" width="173" height="43" color="#FFFFFF" fontSize="28" text="{data.location}"/>
+				<s:Button x="236" y="52" width="190" height="57"
+						  label="{data.mixcount + ' Mixes   '}" click="button1_clickHandler(event)"
+						  fontSize="30" fontWeight="normal" icon="assets/120-headphones.png"
+						  iconPlacement="right"/>
+				
+				
+			</s:BorderContainer>
+			<s:Spacer width="10" height="18"/>
+			<s:Label y="219" width="95%" color="#FFFFFF" fontSize="30"
+						 horizontalCenter="0" text="{data.bio}" />
+			
+		</s:VGroup>
+	</s:Scroller>
+	
+</s:VGroup>
+</s:View>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:IconItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					xmlns:s="library://ns.adobe.com/flex/spark"
+					iconWidth="150" iconHeight="150"
+					labelFunction="getLabel" 
+					messageFunction="getText"
+					iconFunction="getIcon"
+					verticalAlign="top" 
+					messageStyleName="myFontStyle" 
+					styleName="listFontStyle"
+					selectionColor="#3e3e3e" downColor="#3e3e3e" 
+					iconPlaceholder="@Embed(source='assets/placeHolderDJBig.png')"
+					>
+	
+	<fx:Script>
+		<![CDATA[
+			private function getText(item: Object): String
+			{
+				return item.mixcount + ' Mixes' ;
+			}
+			private function getIcon(item: Object): String
+			{
+				var djImage:String;
+				if (item.imageBig == null)
+				{
+					djImage = 'assets/placeHolderDJBig.png' ;
+				}
+				else
+				{
+					djImage = item.imageBig ;
+				}
+				return djImage
+			}
+			private function getLabel(item: Object): String
+			{
+				return item.djName ;
+			}
+			
+					]]>
+	</fx:Script>
+</s:IconItemRenderer>
+
+

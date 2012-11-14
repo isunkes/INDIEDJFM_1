@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		xmlns:mixes="services.mixes.*"
+		title="Dj Mixes"
+		backgroundColor="black"
+		creationComplete="view1_creationCompleteHandler(event)"
+		currentState="noDjSelected">
+	
+	<s:states>
+		<s:State name="noDjSelected">
+			
+		</s:State>
+		<s:State name="DjSelected">
+			
+		</s:State>
+	</s:states>
+	
+	<fx:Script>
+		<![CDATA[
+			import events.CheckNetworkConnection;
+			import events.Close;
+			import events.NowPlaying;
+			
+			
+			import mx.core.UIComponent;
+			import mx.events.FlexEvent;
+			
+			import spark.components.ContentBackgroundAppearance;
+			import spark.events.IndexChangeEvent;
+			
+			[Bindable]
+			public var SelectedDJID:String = '';
+			[Bindable]
+			public var filterString:String = '';
+			[Bindable]
+			public var sortString:String = '';
+			
+			
+			protected function mixes_creationCompleteHandler(event:FlexEvent):void
+			{
+				
+				
+				if(data !== null)
+				{
+					if (data.selectType == 'dj')
+					{
+						SelectedDJID = data.id;
+					}
+					if (data.selectType == 'genre')
+					{
+						filterString = data.genreFilter;
+					}
+					if (data.selectType == 'sort')
+					{
+						sortString = data.sort;
+					}
+					
+					
+				}
+				getMixesResult.token = mixes2.getMixesPage(SelectedDJID,sortString,filterString);
+				if (Capabilities.version.indexOf("IOS") == 0)
+				{
+					closeButton.visible = false;
+					closeButton.height = 0;
+				}
+			}
+			
+			protected function mixes_changeHandler(event:IndexChangeEvent):void
+			{
+				navigator.pushView(views.PlayerView, mixes.selectedItem);
+				
+			}
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				
+				this.dispatchEvent(new CheckNetworkConnection(CheckNetworkConnection.CHECK_NETWORK_STATUS,true));
+				
+				if(data !== null)
+				{
+					if (data.selectType == 'dj')
+					{
+						currentState = "DjSelected";
+						this.title = data.djName;
+					}
+					if (data.selectType == 'genre')
+					{
+						currentState = "DjSelected";
+						this.title = data.genreFilter;
+					}
+					if (data.selectType == 'sort')
+					{
+						currentState = "DjSelected";
+						this.title = 'Dj Mixes';
+					}
+					
+					
+				}
+				
+			}
+			
+			
+			protected function backbutton_clickHandler(event:MouseEvent):void
+			{
+				navigator.popView();
+				
+			}
+			
+			protected function closeButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new Close(Close.CLOSE_APP,true));
+			}
+			
+			protected function nowPlayingButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new NowPlaying(NowPlaying.NOW_PLAYING,true));
+			}
+			
+			protected function aboutButton_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.AboutView);
+				
+			}
+			
+			protected function btn_clickHandler(event:MouseEvent):void
+			{
+				
+				navigator.pushView(views.SelectGenreView);
+			}
+			
+			
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.myFontStyle { 
+			fontSize: 28;
+			color: #E2E2E2;
+			fontFamily: "Roboto-Condensed";
+			paddingTop:10;
+		}
+		
+		.listFontStyle { 
+			fontSize: 50;
+			color: #FFFFFF;
+			fontFamily: "BebasNeue";
+			paddingTop:10;
+		}
+		
+		
+		
+		/* StyleableTextField, regular */
+		@font-face {
+			src: url("assets/fonts/Roboto-Condensed-webfont.ttf");
+			fontFamily: "Roboto-Condensed";
+			embedAsCFF: false;
+		}
+		
+		/* StyleableTextField, regular */
+		@font-face {
+			src: url("assets/fonts/Roboto-BoldCondensed-webfont.ttf");
+			fontFamily: "Roboto-Condensed";
+			embedAsCFF: false;
+			fontWeight: bold;
+		}
+		
+		
+		
+		/* Label, regular */
+		@font-face {
+			src: url("assets/fonts/Roboto-Condensed-webfont.ttf");
+			fontFamily: "Roboto-CondensedCFF";
+			embedAsCFF: true;
+		}
+		
+		/* Label, bold */
+		@font-face {
+			src: url("assets/fonts/Roboto-BoldCondensed-webfont.ttf");
+			fontFamily: "Roboto-CondensedCFF";
+			fontWeight: bold;
+			embedAsCFF: true;
+		}
+		
+		/* StyleableTextField, regular */
+		@font-face {
+			src: url("assets/BebasNeue.otf");
+			fontFamily: "BebasNeue";
+			embedAsCFF: false;
+		}
+		
+		
+		
+		/* Label, regular */
+		@font-face {
+			src: url("assets/BebasNeue.otf");
+			fontFamily: "BebasNeueCFF";
+			embedAsCFF: true;
+		}
+		
+		/* Label, bold */
+		@font-face {
+			src: url("assets/BebasNeue.otf");
+			fontFamily: "BebasNeueCFF";
+			fontWeight: bold;
+			embedAsCFF: true;
+		}
+		
+	</fx:Style>
+	
+	<fx:Declarations>
+		<s:CallResponder id="getMixesResult"/>
+		<mixes:Mixes id="mixes2"/>
+	</fx:Declarations>
+	<s:navigationContent>
+		<s:Button id="backbutton" includeIn="DjSelected" width="76" label="back" click="backbutton_clickHandler(event)" fontWeight="normal"/>
+	</s:navigationContent>
+	<s:actionContent>
+		<s:CalloutButton x="5" width="67" fontSize="22" fontWeight="normal"
+						 icon="assets/sliders30.png" styleName="calloutButtonStyle">
+		
+			<s:calloutLayout>
+				<s:VerticalLayout paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10" horizontalAlign="center" gap="5"/>
+			</s:calloutLayout>
+			<s:calloutContent  >
+				<s:Button id="aboutButton"  label="IndieDJ.FM" fontSize="40" width="250" height="60" fontWeight="normal"
+						  click="aboutButton_clickHandler(event)" icon="assets/59-info.png"/>
+				<s:Button id="nowPlayingButton" width="250"  label="Now Playing" fontSize="40" height="60" fontWeight="normal"
+						  click="nowPlayingButton_clickHandler(event)" icon="assets/36-circle-play.png"/>
+				<s:Button id="btn" label="Genres" width="{nowPlayingButton.width}" fontSize="40" height="60" fontWeight="normal"
+						  click="btn_clickHandler(event)" icon="assets/06-magnify.png"/>
+				<s:Button id="closeButton"  label="Exit" width="{nowPlayingButton.width}" fontSize="40" height="60" fontWeight="normal"
+						  click="closeButton_clickHandler(event)" icon="assets/57-power.png"/>
+			</s:calloutContent>	
+		</s:CalloutButton>
+	</s:actionContent>
+	
+		<s:List id="mixes" width="100%" height="100%" alternatingItemColors="black"
+				change="mixes_changeHandler(event)" color="#FFFFFF" contentBackgroundColor="black"
+				creationComplete="mixes_creationCompleteHandler(event)"
+				itemRenderer="views.MixesViewListItemRenderer"
+				x.noDjSelected="0" y.noDjSelected="0" height.noDjSelected="100%">
+			<s:AsyncListView list="{getMixesResult.lastResult}"/>
+		</s:List>
+	
+</s:View>
+

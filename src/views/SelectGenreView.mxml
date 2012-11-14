@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		xmlns:mixes="services.mixes.*"
+		creationComplete="view1_creationCompleteHandler(event)" title="Genres">
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.myFontStyle { 
+			fontSize: 28;
+			color: #E2E2E2;
+			fontFamily: "Roboto-Condensed";
+			paddingTop:10;
+		}
+		
+		.listFontStyle { 
+			fontSize: 55;
+			color: #FFFFFF;
+			fontFamily: "BebasNeue";
+			paddingTop:10;
+		}
+		
+		/* StyleableTextField, regular */
+		@font-face {
+			src: url("assets/fonts/Roboto-Condensed-webfont.ttf");
+			fontFamily: "Roboto-Condensed";
+			embedAsCFF: false;
+		}
+		
+		/* StyleableTextField, regular */
+		@font-face {
+			src: url("assets/fonts/Roboto-BoldCondensed-webfont.ttf");
+			fontFamily: "Roboto-Condensed";
+			embedAsCFF: false;
+			fontWeight: bold;
+		}
+		
+		
+		
+		/* Label, regular */
+		@font-face {
+			src: url("assets/fonts/Roboto-Condensed-webfont.ttf");
+			fontFamily: "Roboto-CondensedCFF";
+			embedAsCFF: true;
+		}
+		
+		/* Label, bold */
+		@font-face {
+			src: url("assets/fonts/Roboto-BoldCondensed-webfont.ttf");
+			fontFamily: "Roboto-CondensedCFF";
+			fontWeight: bold;
+			embedAsCFF: true;
+		}
+		
+		/* StyleableTextField, regular */
+		@font-face {
+			src: url("assets/BebasNeue.otf");
+			fontFamily: "BebasNeue";
+			embedAsCFF: false;
+		}
+		
+		
+		
+		/* Label, regular */
+		@font-face {
+			src: url("assets/BebasNeue.otf");
+			fontFamily: "BebasNeueCFF";
+			embedAsCFF: true;
+		}
+		
+		/* Label, bold */
+		@font-face {
+			src: url("assets/BebasNeue.otf");
+			fontFamily: "BebasNeueCFF";
+			fontWeight: bold;
+			embedAsCFF: true;
+		}
+		
+	</fx:Style>
+	
+	<fx:Script>
+		<![CDATA[
+			import events.CheckNetworkConnection;
+			import events.Close;
+			import events.NowPlaying;
+			
+			import mx.events.FlexEvent;
+			
+			public var GenreData:Object = new Object();
+			
+			protected function genreList_creationCompleteHandler(event:FlexEvent):void
+			{
+				getMixGenresResult.token = mixes.getMixGenres();
+			}
+			
+			protected function genreList_clickHandler(event:MouseEvent):void
+			{
+				if(genreList.selectedItem.genre == 'All Mix Genres')
+				{
+					navigator.pushView(views.MixesView);
+				}
+				else
+				{
+					GenreData.selectType = 'genre';
+					GenreData.genreFilter = genreList.selectedItem.genre;
+					navigator.pushView(views.MixesView, GenreData);
+				}
+				
+			}
+			
+			protected function closeButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new Close(Close.CLOSE_APP,true));
+			}
+			
+			protected function nowPlayingButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new NowPlaying(NowPlaying.NOW_PLAYING,true));
+			}
+			
+			protected function aboutButton_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.AboutView);
+				
+			}
+			
+			protected function backButton_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				navigator.popView();
+			}
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				this.dispatchEvent(new CheckNetworkConnection(CheckNetworkConnection.CHECK_NETWORK_STATUS,true));
+				if (Capabilities.version.indexOf("IOS") == 0)
+				{
+					closeButton.visible = false;
+					closeButton.height = 0;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<s:CallResponder id="getMixGenresResult"/>
+		<mixes:Mixes id="mixes"/>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:navigationContent>
+		<s:Button id="backButton" label="back" fontSize="24" fontWeight="normal" click="backButton_clickHandler(event)"/>
+	</s:navigationContent>
+	<s:actionContent>
+		<s:CalloutButton x="5" width="67" fontSize="22" fontWeight="normal"
+						 icon="assets/sliders30.png" styleName="calloutButtonStyle">
+			
+			<s:calloutLayout>
+				<s:VerticalLayout paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10" horizontalAlign="center" gap="5"/>
+			</s:calloutLayout>
+			<s:calloutContent  >
+				<s:Button id="aboutButton"  label="IndieDJ.FM" fontSize="40" width="250" height="60" fontWeight="normal"
+						  click="aboutButton_clickHandler(event)" icon="assets/59-info.png"/>
+				<s:Button id="nowPlayingButton"  label="Now Playing" fontSize="40" width="250" height="60" fontWeight="normal"
+						  click="nowPlayingButton_clickHandler(event)" icon="assets/36-circle-play.png"/>
+				<s:Button id="closeButton"  label="Exit" width="{nowPlayingButton.width}" height="60" fontSize="40" fontWeight="normal"
+						  click="closeButton_clickHandler(event)" icon="assets/57-power.png"/>
+			</s:calloutContent>	
+		</s:CalloutButton>
+	</s:actionContent>
+	<s:List id="genreList" x="0" y="0" width="100%" height="100%"
+			creationComplete="genreList_creationCompleteHandler(event)"
+			alternatingItemColors="black"
+			color="#FFFFFF" 
+			contentBackgroundColor="black"
+			click="genreList_clickHandler(event)" labelField="genre" styleName="listFontStyle">
+		<s:AsyncListView list="{getMixGenresResult.lastResult}"/>
+	</s:List>
+</s:View>

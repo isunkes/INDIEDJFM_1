@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="info"
+		backgroundColor="black"
+		creationComplete="view1_creationCompleteHandler(event)">
+	
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import events.Close;
+			import events.NowPlaying;
+			import events.CheckNetworkConnection;
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				this.dispatchEvent(new CheckNetworkConnection(CheckNetworkConnection.CHECK_NETWORK_STATUS,true));
+				if (Capabilities.version.indexOf("IOS") == 0)
+				{
+					closeButton.visible = false;
+					closeButton.height = 0;
+				}
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				navigator.pushView(views.MixesView, data);
+			}
+			
+			protected function backButton_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				navigator.popView();
+			}
+			protected function closeButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new Close(Close.CLOSE_APP,true));
+			}
+			
+			protected function nowPlayingButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new NowPlaying(NowPlaying.NOW_PLAYING,true));
+			}
+			
+			protected function joinButton_clickHandler(event:MouseEvent):void
+			{
+				navigateToURL(new URLRequest("http://www.indiedj.fm/index.cfm/main/join"));
+			}
+			
+		]]>
+	</fx:Script>
+	<s:actionContent>
+		<s:CalloutButton x="5" width="67" fontSize="22" fontWeight="normal"
+						 icon="assets/sliders30.png" styleName="calloutButtonStyle">
+			
+			<s:calloutLayout>
+				<s:VerticalLayout paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10" horizontalAlign="center" gap="5"/>
+			</s:calloutLayout>
+			<s:calloutContent  >
+				<s:Button id="nowPlayingButton"  label="Now Playing" fontSize="40" width="250" height="60" fontWeight="normal"
+						  click="nowPlayingButton_clickHandler(event)" icon="assets/36-circle-play.png"/>
+				<s:Button id="closeButton"  label="Exit" width="{nowPlayingButton.width}" fontSize="40" height="60" fontWeight="normal" 
+						  click="closeButton_clickHandler(event)" icon="assets/57-power.png"/>
+			</s:calloutContent>	
+		</s:CalloutButton>
+	</s:actionContent>
+	<s:navigationContent>
+		<s:Button id="backButton" label="back" fontSize="24" fontWeight="normal" click="backButton_clickHandler(event)" />
+	</s:navigationContent>
+	
+	
+	<s:VGroup width="100%" height="100%" horizontalAlign="center">
+		
+		
+		<s:Scroller width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" gap="0" horizontalAlign="center">
+				<s:Spacer width="10" height="10"/>
+				<s:BorderContainer width="95%" height="{aboutLabelGroup.height}" borderStyle="inset" borderWeight="4"
+								   cornerRadius="10" dropShadowVisible="false" textAlign="left">
+					<s:backgroundFill>
+						<!-- 0 rotation creates left to right gradient -->
+						<s:LinearGradient rotation="90">
+							<s:GradientEntry color="0x434343"/>
+							<s:GradientEntry color="0x343434"/>
+							<s:GradientEntry color="0x343434"/>
+							<s:GradientEntry color="0x343434"/>
+							<s:GradientEntry color="0x343434"/>
+							
+						</s:LinearGradient>
+					</s:backgroundFill>	
+					<s:VGroup id="aboutLabelGroup" width="100%" gap="10" paddingBottom="15"
+							  paddingLeft="10" paddingRight="10" paddingTop="10">
+						<s:Spacer width="13" height="15"/>
+						<s:HGroup width="100%" height="100">
+							<s:Image width="100" height="100" smooth="true" smoothingQuality="high"
+									 source="assets/IOS_114.png"/>
+							<s:Spacer width="13" height="15"/>
+							<s:VGroup width="289" height="87">
+								<s:Spacer width="16" height="18"/>
+								<s:Label color="#FFFFFF" fontSize="50" text="INDIEDJ.FM&#xd;"  />
+							</s:VGroup>
+						</s:HGroup>
+						<s:Spacer width="13" height="15"/>
+						<s:Label color="#FFFFFF" fontSize="27" fontWeight="normal"
+								 text="ABOUT INDIEDJ.FM&#xd;"/>
+						<s:Label width="100%" color="#FFFFFF" text="Amazing independent underground dance music by your local DJ's. indieDJ.fm is a mobile app project created by Syracuse NY's resident House/ Downtempo DJ Sir Isaac. IndieDJ.fm is a dedication and labor of love to underground electronic dance music.&#xd;"/>
+						<s:Spacer width="13" height="22"/>
+						<s:Label color="#FFFFFF" fontSize="27" fontWeight="normal"
+								 text="ARE YOU A DJ?"/>
+						<s:Label width="95%" color="#FFFFFF" text="Interested in joining indiedj.fm and having your DJ mixes available to listen to in the app, click the button below and request to become a member.&#xd;"/>
+						<s:Spacer width="13" height="14"/>
+						<s:Button id="joinButton" width="100%" label="Request to join indiejd.fm" fontSize="30"
+								  fontWeight="normal"
+								  click="joinButton_clickHandler(event)"/>
+						<s:Spacer width="13" height="14"/>
+						
+					</s:VGroup>
+					
+				</s:BorderContainer>
+				<s:Spacer width="13" height="24"/>
+				<s:Label color="#FFFFFF" text="INDIEDJ.FM v1.0.1, Sir Isaac, 2012"/>
+				<s:Spacer width="13" height="20"/>
+				
+				
+			</s:VGroup>
+		</s:Scroller>
+		
+	</s:VGroup>
+	
+	
+</s:View>

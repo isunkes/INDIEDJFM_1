@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		xmlns:mixes="services.mixes.*"
+		backgroundColor="black" title="INDIEDJ.FM"
+		creationComplete="view1_creationCompleteHandler(event)"
+		destructionPolicy="auto"
+		currentState="loading"
+		>
+	
+	<s:states>
+		<s:State name="loading">
+			
+		</s:State>
+		<s:State name="ready">
+			
+		</s:State>
+	</s:states>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import mx.rpc.events.ResultEvent;
+			import events.Close;
+			import events.NowPlaying;
+			import events.CheckNetworkConnection;
+			
+			//database connections
+			import flash.data.SQLConnection;
+			import flash.data.SQLStatement;
+			import flash.filesystem.File;
+			
+			public var topMix1Data:Object = new Object();
+			public var topMix2Data:Object = new Object();
+			public var topMixSmall2Data:Object = new Object();
+			public var topMixSmall3Data:Object = new Object();
+			public var featuredDJ1Data:Object = new Object();
+			public var featuredGenre1Data:Object = new Object();
+			public var featuredGenre2Data:Object = new Object();
+			
+			private var cache:ContentCache = new ContentCache();
+			
+			protected function getPromos():void
+			{
+				getPromosResult.addEventListener(ResultEvent.RESULT,onGetPromos);
+				getPromosResult.token = mixes.getPromos();
+			}
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				this.dispatchEvent(new CheckNetworkConnection(CheckNetworkConnection.CHECK_NETWORK_STATUS,true));
+				getPromos();
+				if (Capabilities.version.indexOf("IOS") == 0)
+				{
+					closeButton.visible = false;
+					closeButton.height = 0;
+				}
+			}
+			
+			protected function onGetPromos(event:ResultEvent):void
+			{
+				trace("promos_recieved");
+				this.currentState = "ready";
+				
+				if ( !topMix1.contentLoader ) {
+					topMix1.contentLoader = cache;
+				}
+				
+				topMix1.source = 'http://www.indiedj.fm/djprofile/promos/' + event.result[0].promoImage;
+				topMix1Data.id = event.result[0].mixID;
+				topMix1Data.mixArtist = event.result[0].djName;
+				topMix1Data.mixName = event.result[0].mixName;
+				topMix1Data.mixFile = event.result[0].mixFile;
+				topMix1Data.mixLen = event.result[0].mixLen;
+				topMix1Data.mixImageBig = event.result[0].mixImageBig;
+				topMix1Data.mixYear = event.result[0].mixYear;
+				topMix1Data.mixGenre = event.result[0].mixGenre;
+				topMix1Data.mixDesc = event.result[0].mixDesc;
+				
+				if ( !topMix2.contentLoader ) {
+					topMix2.contentLoader = cache;
+				}
+				
+				topMix2.source = 'http://www.indiedj.fm/djprofile/promos/' + event.result[1].promoImage;
+				topMix2Data.id = event.result[1].mixID;
+				topMix2Data.mixArtist = event.result[1].djName;
+				topMix2Data.mixName = event.result[1].mixName;
+				topMix2Data.mixFile = event.result[1].mixFile;
+				topMix2Data.mixLen = event.result[1].mixLen;
+				topMix2Data.mixImageBig = event.result[1].mixImageBig;
+				topMix2Data.mixYear = event.result[1].mixYear;
+				topMix2Data.mixGenre = event.result[1].mixGenre;
+				topMix2Data.mixDesc = event.result[1].mixDesc;
+				
+				
+				if ( !topMixSmall2.contentLoader ) {
+					topMixSmall2.contentLoader = cache;
+				}
+				
+				topMixSmall2.source = 'http://www.indiedj.fm/djprofile/promos/' + event.result[2].promoImage;
+				topMixSmall2Data.id = event.result[2].mixID;
+				topMixSmall2Data.mixArtist = event.result[2].djName;
+				topMixSmall2Data.mixName = event.result[2].mixName;
+				topMixSmall2Data.mixFile = event.result[2].mixFile;
+				topMixSmall2Data.mixLen = event.result[2].mixLen;
+				topMixSmall2Data.mixImageBig = event.result[2].mixImageBig;
+				topMixSmall2Data.mixYear = event.result[2].mixYear;
+				topMixSmall2Data.mixGenre = event.result[2].mixGenre;
+				topMixSmall2Data.mixDesc = event.result[2].mixDesc;
+				
+				if ( !topMixSmall3.contentLoader ) {
+					topMixSmall3.contentLoader = cache;
+				}
+				
+				topMixSmall3.source = 'http://www.indiedj.fm/djprofile/promos/' + event.result[3].promoImage;
+				topMixSmall3Data.id = event.result[3].mixID;
+				topMixSmall3Data.mixArtist = event.result[3].djName;
+				topMixSmall3Data.mixName = event.result[3].mixName;
+				topMixSmall3Data.mixFile = event.result[3].mixFile;
+				topMixSmall3Data.mixLen = event.result[3].mixLen;
+				topMixSmall3Data.mixImageBig = event.result[3].mixImageBig;
+				topMixSmall3Data.mixYear = event.result[3].mixYear;
+				topMixSmall3Data.mixGenre = event.result[3].mixGenre;
+				topMixSmall3Data.mixDesc = event.result[3].mixDesc;
+				
+				if ( !featuredDJ1.contentLoader ) {
+					featuredDJ1.contentLoader = cache;
+				}
+				
+				featuredDJ1.source = 'http://www.indiedj.fm/djprofile/promos/' + event.result[4].promoImage;
+				featuredDJ1Data.selectType = 'dj';
+				featuredDJ1Data.id = event.result[4].djID;
+				featuredDJ1Data.djName = event.result[4].djName;
+				featuredDJ1Data.bio = event.result[4].bio;
+				featuredDJ1Data.mixcount = event.result[4].mixcount;
+				featuredDJ1Data.imageSmall =  event.result[4].imageSmall;
+				
+				if ( !featuredGenre1.contentLoader ) {
+					featuredGenre1.contentLoader = cache;
+				}
+				
+				featuredGenre1.source = 'http://www.indiedj.fm/djprofile/promos/' + event.result[5].promoImage;
+				featuredGenre1Data.selectType = 'genre';
+				featuredGenre1Data.genreFilter =  event.result[5].genre;
+				
+				if ( !featuredGenre2.contentLoader ) {
+					featuredGenre2.contentLoader = cache;
+				}
+				
+				featuredGenre2.source = 'http://www.indiedj.fm/djprofile/promos/' + event.result[6].promoImage;
+				featuredGenre2Data.selectType = 'genre';
+				featuredGenre2Data.genreFilter =  event.result[6].genre;
+				
+				
+				
+			}
+			
+			protected function topMix1_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.PlayerView, topMix1Data);
+			}
+			
+			protected function topMix2_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.PlayerView, topMix2Data);
+			}
+			
+			protected function topMixSmall2_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.PlayerView, topMixSmall2Data);
+				
+			}
+			
+			protected function topMixSmall3_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.PlayerView, topMixSmall3Data);
+				
+			}
+			
+			protected function featuredDJ1_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.DjView, featuredDJ1Data);
+				
+			}
+			
+			protected function featuredGenre1_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.MixesView, featuredGenre1Data);
+				
+			}
+			
+			protected function featuredGenre2_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.MixesView, featuredGenre2Data);
+				
+			}
+			
+			protected function aboutButton_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.AboutView);
+				
+			}
+			
+			protected function closeButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new Close(Close.CLOSE_APP,true));
+			}
+			
+			protected function nowPlayingButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new NowPlaying(NowPlaying.NOW_PLAYING,true));
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CallResponder id="getPromosResult"/>
+		<mixes:Mixes id="mixes"/>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:ContentCache id="imgcache" enableCaching="true" enableQueueing="true" maxActiveRequests="1" maxCacheEntries="10"/> 
+	</fx:Declarations>
+	
+	<s:actionContent>
+		<s:CalloutButton width="67" fontSize="22" fontWeight="normal" horizontalPosition="auto"
+						 icon="assets/sliders30.png" styleName="calloutButtonStyle"
+						 verticalPosition="auto">
+			
+			<s:calloutLayout>
+				<s:VerticalLayout paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10" gap="5"/>
+			</s:calloutLayout>
+			<s:calloutContent  >
+				<s:Button id="aboutButton"  label="IndieDJ.FM" fontSize="40" width="250" height="60" fontWeight="normal"
+						  click="aboutButton_clickHandler(event)" icon="assets/59-info.png"/>
+				<s:Button id="nowPlayingButton"  label="Now Playing" fontSize="40" width="250" height="60" fontWeight="normal"
+						  click="nowPlayingButton_clickHandler(event)" icon="assets/36-circle-play.png"/>
+				<s:Button id="closeButton"  label="Exit" width="{nowPlayingButton.width}" fontSize="40" height="60" fontWeight="normal"
+						  click="closeButton_clickHandler(event)" icon="assets/57-power.png"/>
+			</s:calloutContent>	
+		</s:CalloutButton>
+	</s:actionContent>
+	
+	
+	<s:Scroller x="0" y="0" width="100%" height="100%">
+		<s:VGroup width="100%" height="100%" >
+			<s:VGroup width="100%" height="100%" gap="0"
+					  horizontalAlign.loading="center">
+				<s:Image includeIn="ready" id="topMix1" width="100%" height="200" scaleMode="stretch" smooth="true"
+						 smoothingQuality="high"
+						 click="topMix1_clickHandler(event)"/>
+				<s:Image includeIn="ready" id="topMix2" width="100%" height="200" scaleMode="stretch" smooth="true"
+						 smoothingQuality="high"
+						 click="topMix2_clickHandler(event)"/>
+				<s:HGroup width="100%" height="200" gap="0" includeIn="ready">
+					<s:Image includeIn="ready" id="topMixSmall2" width="50%" height="200" scaleMode="zoom" smooth="true"
+							 smoothingQuality="high"
+							 click="topMixSmall2_clickHandler(event)"/>
+					<s:Image includeIn="ready" id="topMixSmall3" width="50%" height="200" scaleMode="zoom" smooth="true"
+							 smoothingQuality="high"
+							 click="topMixSmall3_clickHandler(event)"/>
+				</s:HGroup>
+				<s:Image includeIn="ready" id="featuredDJ1" width="100%" height="200" scaleMode="zoom" smooth="true"
+						 smoothingQuality="high"
+						 click="featuredDJ1_clickHandler(event)"/>
+				<s:Image includeIn="ready" id="featuredGenre1" width="100%" height="200" scaleMode="zoom" smooth="true"
+						 smoothingQuality="high"
+						 click="featuredGenre1_clickHandler(event)"/>
+				<s:Image includeIn="ready" id="featuredGenre2" width="100%" height="200" scaleMode="zoom" smooth="true"
+						 smoothingQuality="high"
+						 click="featuredGenre2_clickHandler(event)"/>
+				<s:Spacer includeIn="loading" width="10" height="40%"/>
+				<s:BusyIndicator includeIn="loading" width="70" height="70" symbolColor="white"/>
+			</s:VGroup>
+		</s:VGroup>
+	</s:Scroller>
+</s:View>

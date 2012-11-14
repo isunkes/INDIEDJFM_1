@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TabbedViewNavigatorApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+								  xmlns:s="library://ns.adobe.com/flex/spark" applicationDPI="240"
+								  splashScreenImage="views.SplashScreenView"
+								  creationComplete="init()"
+								 >
+	<fx:Declarations>
+		<fx:Component className="AlertMsg" id="noMixAlert">
+			<s:SkinnablePopUpContainer x="70" y="300" backgroundAlpha="0.0" width="300">
+				<s:BorderContainer width="95%" height="155" dropShadowVisible="false" borderStyle="inset" borderWeight="4"
+								   cornerRadius="10">
+					<s:backgroundFill>
+						<!-- 0 rotation creates left to right gradient -->
+						<s:LinearGradient rotation="90">
+							<s:GradientEntry color="0x292929"/>
+							<s:GradientEntry color="0x292929"/>
+							<s:GradientEntry color="0x030303"/>
+							<s:GradientEntry color="0x030303"/>
+							<s:GradientEntry color="0x030303"/>
+							
+						</s:LinearGradient>
+					</s:backgroundFill>
+					<s:layout>
+						<s:VerticalLayout paddingTop="18" paddingBottom="8" paddingLeft="8" paddingRight="8" horizontalAlign="center" verticalAlign="middle"/>
+					</s:layout>
+					
+						<s:Label color="white" text="No Mix Selected"/>
+						<s:Button label="close" click="close()" fontSize="40" fontWeight="normal"/>
+					
+					</s:BorderContainer>
+			</s:SkinnablePopUpContainer>
+		</fx:Component>
+		<fx:Component className="FaveAddedMsg" id="faveAddedAlert">
+			<s:SkinnablePopUpContainer x="70" y="300" backgroundAlpha="0.0" width="300">
+				<s:BorderContainer width="95%" height="155" dropShadowVisible="false" borderStyle="inset" borderWeight="4"
+								   cornerRadius="10">
+					<s:backgroundFill>
+						<!-- 0 rotation creates left to right gradient -->
+						<s:LinearGradient rotation="90">
+							<s:GradientEntry color="0x292929"/>
+							<s:GradientEntry color="0x292929"/>
+							<s:GradientEntry color="0x030303"/>
+							<s:GradientEntry color="0x030303"/>
+							<s:GradientEntry color="0x030303"/>
+							
+						</s:LinearGradient>
+					</s:backgroundFill>
+					<s:layout>
+						<s:VerticalLayout paddingTop="18" paddingBottom="8" paddingLeft="8" paddingRight="8" horizontalAlign="center" verticalAlign="middle"/>
+					</s:layout>
+					
+					<s:Label color="white" text="Mix Added to Faves"/>
+					<s:Button label="OK" click="close()" fontSize="40" fontWeight="normal"/>
+					
+				</s:BorderContainer>
+			</s:SkinnablePopUpContainer>
+		</fx:Component>
+	</fx:Declarations>
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		s|ActionBar
+		{
+			chromeColor: #3b3b3b;
+			
+		}
+		s|ActionBar #titleDisplay
+		{
+			color: #FFFFFF;
+			fontWeight: normal;
+			fontSize: 64;
+			skinClass: ClassReference("spark.skins.mobile.ActionBarSkin");
+			textShadowAlpha: .05;
+			textShadowColor: #BBBBBB;
+		}
+		s|TabbedViewNavigator #tabBar
+		{
+			chromeColor: #232323;
+			fontWeight: normal;
+			
+		}
+		
+		
+		@media (os-platform: "IOS")
+		{
+			s|ActionBar
+			{
+				defaultButtonAppearance: beveled;
+			}
+		}
+		
+		/* StyleableTextField, regular */
+		@font-face {
+			src: url("assets/BebasNeue.otf");
+			fontFamily: "BebasNeue";
+			embedAsCFF: false;
+		}
+		
+		/* Label, regular */
+		@font-face {
+			src: url("assets/fonts/Roboto-Condensed-webfont.ttf");
+			fontFamily: "Roboto-CondensedCFF";
+			embedAsCFF: true;
+		}
+		
+		/* Label, bold */
+		@font-face {
+			src: url("assets/fonts/Roboto-BoldCondensed-webfont.ttf");
+			fontFamily: "Roboto-CondensedCFF";
+			fontWeight: bold;
+			embedAsCFF: true;
+		}
+		
+		/* Label, regular */
+		@font-face {
+			src: url("assets/BebasNeue.otf");
+			fontFamily: "BebasNeueCFF";
+			embedAsCFF: true;
+		}
+		
+		/* Label, bold */
+		@font-face {
+			src: url("assets/BebasNeue.otf");
+			fontFamily: "BebasNeueCFF";
+			fontWeight: bold;
+			embedAsCFF: true;
+		}
+		
+		s|Label
+		{
+			fontFamily: "Roboto-CondensedCFF";
+		}
+		
+		s|ActionBar
+		{
+			fontFamily: "BebasNeue";
+		}
+		
+		s|Button
+		{
+			fontFamily: "BebasNeue";
+		}
+		
+		s|Callout{ 
+			contentBackgroundAppearance:"none";
+		}
+		
+		
+		
+	</fx:Style>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import events.Close;
+			import events.LoadMixPlayer;
+			import events.MixPlayerCurrentFile;
+			import events.MixPlayerMetaData;
+			import events.MixPlayerPause;
+			import events.MixPlayerPlaying;
+			import events.MixPlayerRemove;
+			import events.MixPlayerResume;
+			import events.MixPlayerSeek;
+			import events.MixPlayerTime;
+			import events.NowPlaying;
+			import events.MixPlayerAddFavMix;
+			
+			import flash.events.EventDispatcher;
+			import flash.events.NetStatusEvent;
+			import flash.net.NetConnection;
+			import flash.net.NetStream;
+			import flash.utils.clearInterval;
+			
+			private var connectionURL:String = "rtmp://sgzkg9myf9lou.cloudfront.net/cfx/st/";
+			private var nc:NetConnection;
+			private var ns:NetStream;
+			private var nsClient:Object;
+			
+			protected var mixObject:Object = new Object();
+			
+			private var firstNetConnection:Boolean;
+			private var intervalNC:Timer;
+			
+			protected var mixPlayerInterval:Number;
+			
+			protected var mixPlayerCurrentFile:String;
+			protected var mixPlayerPlaying:Boolean;
+			
+			protected var sqlConnection:SQLConnection = new SQLConnection();
+			
+			protected function init():void
+			{
+				//initialize database
+				//initDB();
+				
+				// Flag that determines whether to call connectStream() or reconnectStream().
+				firstNetConnection = new Boolean();
+				firstNetConnection = true;
+				
+				// A Timer to delay the reconnection.  
+				intervalNC = new Timer(2000, 1);
+				intervalNC.addEventListener(TimerEvent.TIMER_COMPLETE, reconnectNetConnection);
+				
+				mixObject.mixFile = '';
+				NativeApplication.nativeApplication.systemIdleMode=SystemIdleMode.KEEP_AWAKE;
+				nc = new NetConnection();
+				nc.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+				nc.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+				nc.connect(connectionURL);
+				
+				nc.client = {onBWDone: function():void{ trace("onBWDone") } };
+				
+				sqlConnection = new SQLConnection();
+				sqlConnection.open(File.applicationStorageDirectory.resolvePath("faves.db"));
+				var stmt:SQLStatement = new SQLStatement();
+				stmt.sqlConnection = sqlConnection;
+				stmt.text = "CREATE TABLE IF NOT EXISTS faves (mixID INTEGER)";
+				stmt.execute();
+				
+				
+				mixesViewNavigator.addEventListener("CLOSE_APP",closeAppHandler);
+				homeViewNavigator.addEventListener("CLOSE_APP",closeAppHandler);
+				djsViewNavigator.addEventListener("CLOSE_APP",closeAppHandler);
+				favesViewNavigator.addEventListener("CLOSE_APP",closeAppHandler);
+				
+				mixesViewNavigator.addEventListener("MIX_EVENT",loadMixHandler);
+				mixesViewNavigator.addEventListener("MIX_SEEK",mixSeekHandler);
+				mixesViewNavigator.addEventListener("MIX_PAUSE",mixPauseHandler);
+				mixesViewNavigator.addEventListener("MIX_RESUME",mixResumeHandler);
+				mixesViewNavigator.addEventListener("MIX_REMOVE",mixRemoveHandler);
+				mixesViewNavigator.addEventListener("CURRENT_MIX",mixPlayerCurrentFileHandler);
+				mixesViewNavigator.addEventListener("NOW_PLAYING",mixPlayerNowPlayingHandler);
+				mixesViewNavigator.addEventListener("ADD_FAVE",mixPlayerAddFaveHandler);
+				
+				homeViewNavigator.addEventListener("MIX_EVENT",loadMixHandler);
+				homeViewNavigator.addEventListener("MIX_SEEK",mixSeekHandler);
+				homeViewNavigator.addEventListener("MIX_PAUSE",mixPauseHandler);
+				homeViewNavigator.addEventListener("MIX_RESUME",mixResumeHandler);
+				homeViewNavigator.addEventListener("MIX_REMOVE",mixRemoveHandler);
+				homeViewNavigator.addEventListener("CURRENT_MIX",mixPlayerCurrentFileHandler);
+				homeViewNavigator.addEventListener("NOW_PLAYING",mixPlayerNowPlayingHandler);
+				homeViewNavigator.addEventListener("ADD_FAVE",mixPlayerAddFaveHandler);
+				
+				djsViewNavigator.addEventListener("MIX_EVENT",loadMixHandler);
+				djsViewNavigator.addEventListener("MIX_SEEK",mixSeekHandler);
+				djsViewNavigator.addEventListener("MIX_PAUSE",mixPauseHandler);
+				djsViewNavigator.addEventListener("MIX_RESUME",mixResumeHandler);
+				djsViewNavigator.addEventListener("MIX_REMOVE",mixRemoveHandler);
+				djsViewNavigator.addEventListener("CURRENT_MIX",mixPlayerCurrentFileHandler);
+				djsViewNavigator.addEventListener("NOW_PLAYING",mixPlayerNowPlayingHandler);
+				djsViewNavigator.addEventListener("ADD_FAVE",mixPlayerAddFaveHandler);
+				
+				favesViewNavigator.addEventListener("MIX_EVENT",loadMixHandler);
+				favesViewNavigator.addEventListener("MIX_SEEK",mixSeekHandler);
+				favesViewNavigator.addEventListener("MIX_PAUSE",mixPauseHandler);
+				favesViewNavigator.addEventListener("MIX_RESUME",mixResumeHandler);
+				favesViewNavigator.addEventListener("MIX_REMOVE",mixRemoveHandler);
+				favesViewNavigator.addEventListener("CURRENT_MIX",mixPlayerCurrentFileHandler);
+				favesViewNavigator.addEventListener("NOW_PLAYING",mixPlayerNowPlayingHandler);
+				favesViewNavigator.addEventListener("ADD_FAVE",mixPlayerAddFaveHandler);
+				
+				
+			}
+			
+			protected function mixPlayerAddFaveHandler(event:MixPlayerAddFavMix):void
+			{
+				trace('add to faves')
+				var stmt:SQLStatement = new SQLStatement();
+				stmt.sqlConnection = sqlConnection;
+				stmt.text = "INSERT into faves(mixid) values(:mixid)";
+				stmt.parameters[":mixid"] = event.mixObject.id;
+				stmt.execute();
+				
+				(new FaveAddedMsg()).open(this, false)
+				
+			}
+			
+			override public function dispatchEvent(event:Event):Boolean
+			{
+				trace(event.type);
+				return super.dispatchEvent(event);
+			}
+			
+			protected function netStatusHandler(e:NetStatusEvent):void 
+			{ 
+				
+				trace(e.info.code);
+				
+				
+				switch (e.info.code) {
+					case "NetStream.Play.Start" :
+							trace("IT'S PLAYING YOU SHOULD SEE SOMETHING");
+						break;
+					
+					case "NetStream.Buffer.Empty" :
+							trace("THE BUFFER IS NOW EMPTY.");
+							//ns.resume();
+							//mixPlayerPlaying = true;
+						break;
+					
+					case "NetConnection.Connect.Success" :
+						if (firstNetConnection) { 
+							// If this is the first time connecting, create and set up a NetStream.
+							connectStream();
+						} else { 
+							// If this isn't the first time connecting, attach the NetStream 
+							// to the reconnected NetConnection. 
+							reconnectStream(); 
+						} 
+						break;	
+					case "NetConnection.Connect.Closed":
+						// After the connection closes, change the firstNetConnection flag.
+						firstNetConnection = false;
+						intervalNC.start();
+						trace("Timer Started");
+						break;
+					case "NetConnection.Connect.Failed":
+						// If the reconnection attempt fails, try again. 
+						intervalNC.start();
+						break;
+					case "NetConnection.Connect.NetworkChange":
+						// If the reconnection attempt fails, try again. 
+						trace("NetworkChange");
+						break;
+				}
+
+			}
+			
+			
+			// Called when the first NetConnection is successful.
+			private function connectStream():void {
+				trace("connectStream() called");
+				
+				// Create a NetStream and add listeners to handle NetStatusEvents and errors.
+				ns = new NetStream(nc);
+				ns.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+				ns.addEventListener(AsyncErrorEvent.ASYNC_ERROR, asyncErrorHandler);
+				
+				// Turn on Smark Seeking and set the bufferTime so there's enough time to reconnect
+				// and maintain seamless playback.
+				ns.inBufferSeek=true;
+				ns.bufferTime = 5;
+				
+				// Create an object to handle the metadata.     
+				// Assign the client property to the object handling the metadata.
+				nsClient = new Object();
+				nsClient.onMetaData = ns_onMetaData;
+				ns.client = nsClient;
+				
+				
+			}
+			
+			// Called after a connection closes to reconnect to FMS.
+			private function reconnectNetConnection(timer:TimerEvent):void {
+				trace("reconnectNetConnection() called");
+				nc = new NetConnection();
+				nc.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+				nc.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+				nc.connect(connectionURL);
+				
+				nc.client = {onBWDone: function():void{ trace("onBWDone") } };
+				
+			}
+			
+			// Called after a successful reconnection to FMS.
+			private function reconnectStream():void {
+				trace("reconnectStream() called");
+				// Attaches the same NetStream to the reconnected NetConnection.
+				// Flash Player knows where to start playing the stream.
+				ns.attach(nc); 
+				// Add the first playlist entry.
+				// Note that to rebuild the playlist, you use APPEND_AND_WAIT.  
+				if(mixPlayerPlaying == true)
+				{
+					ns.resume();
+				}
+				
+				
+				
+			}
+			
+			private function ns_onMetaData(item:Object):void {
+				
+			}
+			
+			// Handles error messages.  
+			private function securityErrorHandler(event:SecurityErrorEvent):void {
+				// Ignore SecurityErrorEvent events.
+			}
+			
+			private function asyncErrorHandler(event:AsyncErrorEvent):void {
+				// Ignore AsyncErrorEvent events.
+			}
+			
+			
+			
+			private function disconnect():void{
+				nc.call("disconnectClient", null);
+			}
+			
+			
+			
+			
+			
+			/* this function will handle creation of the NetStream object. we invoke NetStream.play() to begin streaming. */ 
+			protected function beginStream():void 
+			{ 
+				ns = new NetStream(nc);
+				
+				ns.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler); 
+				ns.play("MP3:SirIsaac_WineandWhiskeyLounge_128k");
+			
+			}
+			
+			protected function loadMixHandler(event:LoadMixPlayer):void
+			{
+				trace(event.mixObject.mixFile);
+				mixObject = event.mixObject;
+				mixPlayerCurrentFile = event.mixObject.mixFile;
+				ns.bufferTime = 3;
+				ns.client = {
+								onMetaData:function(obj:Object):void
+								{
+									//void
+								} 
+							}
+				ns.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler); 
+				ns.dispose();
+				ns.close();
+				ns.play("mp3:" + event.mixObject.mixFile );
+				mixPlayerInterval = setInterval(checkTime, 500);
+				mixPlayerPlaying = true;
+				
+				
+				
+				
+			}
+			
+			protected function checkTime():void 
+			{  
+				//trace(ns.time);
+				tabbedNavigator.selectedNavigator.activeView.dispatchEvent(new MixPlayerTime(ns.time,MixPlayerTime.LOAD_MIX_TIME));
+			}
+			
+			protected function mixSeekHandler(event:MixPlayerSeek):void
+			{
+				ns.seek(event.mixSeekTime);
+			}
+			
+			protected function mixPauseHandler(event:MixPlayerPause):void
+			{
+				ns.pause();
+				mixPlayerPlaying = false;
+			}
+			
+			protected function mixResumeHandler(event:MixPlayerResume):void
+			{
+				ns.resume();
+				mixPlayerPlaying = true;
+			}
+			
+			protected function mixRemoveHandler(event:MixPlayerRemove):void
+			{
+				clearInterval(mixPlayerInterval);
+			}
+			
+			protected function mixPlayerCurrentFileHandler(event:MixPlayerCurrentFile):void
+			{
+				if(mixPlayerCurrentFile == event.mixObject.mixFile)
+				{
+					trace(event.mixObject.mixFile);
+					mixPlayerInterval = setInterval(checkTime, 500);
+					tabbedNavigator.selectedNavigator.activeView.dispatchEvent(new MixPlayerPlaying(mixObject,MixPlayerPlaying.CURRENT_MIX_PLAYING));
+				}
+			}
+			
+			protected function closeAppHandler(event:Close):void
+			{
+				NativeApplication.nativeApplication.exit();
+			}
+			
+			
+			protected function mixPlayerNowPlayingHandler(event:NowPlaying):void
+			{
+				if (mixObject.mixFile == '')
+				{
+					(new AlertMsg()).open(this, false)
+				}
+				else
+				{
+					tabbedNavigator.selectedNavigator.activeView.navigator.pushView(views.PlayerView, mixObject);
+				}
+				
+				
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	
+	
+	<s:ViewNavigator id="homeViewNavigator"  width="100%" height="100%" firstView="views.HomeView">
+		<s:icon>
+			<s:MultiDPIBitmapSource source160dpi="assets/53-house@2x.png"
+									source240dpi="assets/53-house@2x.png"
+									source320dpi="assets/53-house@2x.png"/>
+		</s:icon>
+	</s:ViewNavigator>
+	
+	<s:ViewNavigator id="mixesViewNavigator" width="100%" height="100%" firstView="views.MixesView">
+		<s:icon>
+			<s:MultiDPIBitmapSource source160dpi="assets/120-headphones@2x.png"
+									source240dpi="assets/120-headphones@2x.png"
+									source320dpi="assets/120-headphones@2x.png"/>
+		</s:icon>
+	</s:ViewNavigator>
+	
+	<s:ViewNavigator id="djsViewNavigator"  width="100%" height="100%" firstView="views.DjsView" >
+		<s:icon>
+			<s:MultiDPIBitmapSource source160dpi="assets/112-group@2x.png"
+									source240dpi="assets/112-group@2x.png"
+									source320dpi="assets/112-group@2x.png"/>
+		</s:icon>
+	</s:ViewNavigator>
+	
+	<s:ViewNavigator id="favesViewNavigator"  width="100%" height="100%" firstView="views.FavoritesView">
+		<s:icon>
+			<s:MultiDPIBitmapSource source160dpi="assets/29-heart@2x.png"
+									source240dpi="assets/29-heart@2x.png"
+									source320dpi="assets/29-heart@2x.png"/>
+		</s:icon>
+	</s:ViewNavigator>
+	
+	
+	
+</s:TabbedViewNavigatorApplication>
+

@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		xmlns:mx="library://ns.adobe.com/flex/mx"
+		xmlns:assets="assets.*"
+		title="{data.mixArtist}"
+		backgroundColor="black"
+		creationComplete="view1_creationCompleteHandler(event)"
+		removing="view1_removingHandler(event)"
+		currentState="normal"
+		>
+	
+	<s:states>
+		<s:State name="buffering">
+			
+		</s:State>
+		<s:State name="normal">
+			
+		</s:State>
+	</s:states>
+	
+	<fx:Script>
+		<![CDATA[
+			import customSkin.customButtonSkin;
+			
+			import events.LoadMixPlayer;
+			import events.MixPlayerCurrentFile;
+			import events.MixPlayerMetaData;
+			import events.MixPlayerPause;
+			import events.MixPlayerPlaying;
+			import events.MixPlayerRemove;
+			import events.MixPlayerResume;
+			import events.MixPlayerSeek;
+			import events.MixPlayerTime;
+			import events.Close;
+			import events.MixPlayerAddFavMix;
+			import events.MixPlayerRemoveFavMix;
+			import events.CheckNetworkConnection;
+			
+			protected var sqlConnection:SQLConnection = new SQLConnection();
+			
+			import mx.events.FlexEvent;
+			
+			import spark.events.ViewNavigatorEvent;
+
+			
+			private var isPlaying:Boolean = false;
+			
+			
+			override public function dispatchEvent(event:Event):Boolean
+			{
+				//trace(event.type);
+				return super.dispatchEvent(event);
+			}
+			
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				this.addEventListener("MIX_METAEVENT",loadMixMetaDataHandler);
+				this.addEventListener("MIX_TIME",loadMixTimeHandler);
+				this.dispatchEvent(new MixPlayerCurrentFile(data,MixPlayerCurrentFile.CURRENT_MIX,true));
+				this.tabBarVisible = false;
+				
+				sqlConnection = new SQLConnection();
+				sqlConnection.open(File.applicationStorageDirectory.resolvePath("faves.db"));
+				var sqls:SQLStatement = new SQLStatement();
+				sqls.sqlConnection = sqlConnection;
+				sqls.text = "SELECT mixid FROM faves WHERE mixid = :mixid";
+				sqls.parameters[":mixid"] = data.id;
+				sqls.execute();
+				var sqldata:SQLResult = sqls.getResult();
+				// we pass the array of objects to our data provider to fill the datagrid
+				
+				
+				var mixIdList:String = '';
+				
+				if(sqldata.data !== null)
+				{
+					removeFaveButton.visible = true;
+					removeFaveButton.height = 60;
+					faveButton.visible = false;
+					faveButton.height = 0;
+				}
+				else
+				{
+					removeFaveButton.visible = false;
+					removeFaveButton.height = 0;
+					faveButton.visible = true;
+					faveButton.height = 60;
+				}
+				if (Capabilities.version.indexOf("IOS") == 0)
+				{
+					closeButton.visible = false;
+					closeButton.height = 0;
+				}
+				
+				
+			}
+			
+			protected function loadMixMetaDataHandler(Event:MixPlayerMetaData):void
+			{
+				endTime.text = timeToString(Event.mixMetaData.duration);
+				scrub.maximum = Event.mixMetaData.duration;
+			}
+			
+			protected function loadMixTimeHandler(Event:MixPlayerTime):void
+			{
+				runTime.text = timeToString(Event.mixTime);
+				scrub.value = Event.mixTime;
+				isPlaying = true;
+			}
+			
+			
+			
+			public function timeToString(value:Number):String
+			{
+				var seconds:Number  =  Math.round(value % 60);
+				var minutes:Number  = Math.floor((value/60) % 60);
+				var hours:Number  = Math.floor((value/3600) % 24);
+				
+				var s:String = seconds < 10 ? "0" + String(seconds) : String(seconds);
+				var m:String = minutes < 10 ? "0" + String(minutes) : String(minutes);
+				var h:String = hours < 10 ? "0" + String(hours) : String(hours);
+				
+				return h + ":" + m  + ":" +  s;
+			}
+			
+			
+			protected function hslider1_changeHandler(event:Event):void
+			{
+				this.dispatchEvent(new MixPlayerSeek(scrub.value,MixPlayerSeek.LOAD_MIX_SEEK,true));
+			}
+			
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				
+				navigator.popView();
+			}
+			
+			
+			protected function pauseButton_clickHandler(event:MouseEvent):void
+			{
+				trace(isPlaying);
+				if (event.target.selected)
+				{
+					if (isPlaying == false)
+					{
+						trace('play')
+						this.currentState = 'buffering';
+						this.dispatchEvent(new LoadMixPlayer(data,LoadMixPlayer.LOAD_MIX,true));
+					}
+					else
+					{
+						this.dispatchEvent(new MixPlayerResume(data,MixPlayerResume.RESUME_MIX,true));
+					}
+					
+				} 
+				else
+				{
+					this.dispatchEvent(new MixPlayerPause(data.mixFile,MixPlayerPause.PAUSE_MIX,true));
+				}
+			}
+			
+			protected function view1_removingHandler(event:ViewNavigatorEvent):void
+			{
+				this.dispatchEvent(new MixPlayerRemove(data.mixFile,MixPlayerRemove.REMOVE_MIX,true));
+				
+			}
+			
+			protected function mixPlayerPlayingHandler(event:MixPlayerPlaying):void
+			{
+				trace(event.mixPlayerPlaying);
+				if(event.mixPlayerPlaying == true)
+				{
+					pauseButton.selected = true;
+				}
+				else
+				{
+					pauseButton.selected = false;
+				}
+			}
+			
+			protected function pauseButton_creationCompleteHandler(event:FlexEvent):void
+			{
+				this.addEventListener("CURRENT_MIX_PLAYING",mixPlayerPlayingHandler);
+				
+			}
+			
+			protected function closeButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new Close(Close.CLOSE_APP,true));
+			}
+			
+			protected function faveButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new MixPlayerAddFavMix(data,MixPlayerAddFavMix.ADD_FAVE,true));
+				removeFaveButton.visible = true;
+				removeFaveButton.height = 60;
+				faveButton.visible = false;
+				faveButton.height = 0;
+			}
+			
+			protected function removeFaveButton_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new MixPlayerRemoveFavMix(data,MixPlayerRemoveFavMix.REMOVE_FAVE,true));
+				removeFaveButton.visible = false;
+				removeFaveButton.height = 0;
+				faveButton.visible = true;
+				faveButton.height = 60;
+			}
+			
+			protected function mixPlayerImage_creationCompleteHandler(event:FlexEvent):void
+			{
+				mixPlayerImage.source= data.mixImageBig;
+			}
+			
+			protected function aboutButton_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(views.AboutView);
+				
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:navigationContent>
+		<s:Button label="Back"
+				  click="button1_clickHandler(event)" fontWeight="normal"/>
+	</s:navigationContent>
+	<s:actionContent>
+		<s:CalloutButton x="5" width="67" fontSize="22" fontWeight="normal"
+						 icon="assets/sliders30.png" styleName="calloutButtonStyle">
+			
+			<s:calloutLayout>
+				<s:VerticalLayout paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10" horizontalAlign="center" gap="5"/>
+			</s:calloutLayout>
+			<s:calloutContent  >
+				<s:Button id="aboutButton"  label="IndieDJ.FM" fontSize="40" width="300" height="60" fontWeight="normal"
+						  click="aboutButton_clickHandler(event)" icon="assets/59-info.png"/>
+				<s:Button id="faveButton"  label="Fave This Mix" width="300" height="60" fontSize="40" fontWeight="normal"
+						  click="faveButton_clickHandler(event)"
+						  icon="assets/29-heart.png"/>
+				<s:Button id="removeFaveButton"  label="Delete Fave" width="300" height="60" fontSize="40" fontWeight="normal"
+						  click="removeFaveButton_clickHandler(event)"
+						  icon="assets/29-heart.png"/>
+				<s:Button id="closeButton"  label="Exit" width="300" fontSize="40" height="60" fontWeight="normal"
+						  click="closeButton_clickHandler(event)"
+						  icon="assets/57-power.png"/>
+			</s:calloutContent>	
+		</s:CalloutButton>
+	</s:actionContent>
+	
+	<s:VGroup width="100%" height="100%" horizontalAlign="center">
+		
+		
+		<s:Scroller width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" gap="5" horizontalAlign="center" paddingTop="5">
+					<s:Image id="mixPlayerImage" width="95%"
+							 creationComplete="mixPlayerImage_creationCompleteHandler(event)"
+							 horizontalCenter="0" scaleMode="letterbox" smooth="true"
+							 smoothingQuality="high"/>
+				<s:BorderContainer width="95%" height="{mixLabelGroup.height}" dropShadowVisible="false" borderStyle="inset" borderWeight="4"
+								   cornerRadius="10">
+					<s:backgroundFill>
+						<!-- 0 rotation creates left to right gradient -->
+						<s:LinearGradient rotation="90">
+							<s:GradientEntry color="0x343434"/>
+							<s:GradientEntry color="0x030303"/>
+							<s:GradientEntry color="0x030303"/>
+							<s:GradientEntry color="0x030303"/>
+							<s:GradientEntry color="0x030303"/>
+							
+						</s:LinearGradient>
+					</s:backgroundFill>
+				<s:VGroup id="mixLabelGroup" width="100%" gap="10" paddingBottom="15"
+						  paddingLeft="10" paddingRight="10" paddingTop="10">
+					<s:Label id="djNameLabelText" width="100%" color="#FFFFFF" fontSize="28"
+							 text="{data.mixArtist}"/>
+					<s:Label width="100%" id="mixNameLabelText" color="#FFFFFF" text="{data.mixName}"/>
+					<s:Label width="100%" id="mixGenreLabelText" color="#FFFFFF" text="{data.mixGenre}"/>
+					<s:Label width="100%" id="mixYearLabelText" color="#FFFFFF" text="{data.mixYear}"/>
+					<s:Label width="100%" id="mixDescLabelText" color="#FFFFFF" text="{data.mixDesc}"/>
+				</s:VGroup>
+				</s:BorderContainer>	
+				<s:Spacer width="15" height="20 "/>
+				
+				
+				
+				
+			</s:VGroup>
+		</s:Scroller>
+		<s:BorderContainer width="100%" height="116" dropShadowVisible="false" borderStyle="solid" borderWeight="0"
+						   cornerRadius="0">
+			<s:backgroundFill>
+				<!-- 0 rotation creates left to right gradient -->
+				<s:LinearGradient rotation="90">
+					<s:GradientEntry color="0x434343"/>
+					<s:GradientEntry color="0x434343"/>
+					<s:GradientEntry color="0x343434"/>
+					<s:GradientEntry color="0x343434"/>
+					<s:GradientEntry color="0x343434"/>
+					<s:GradientEntry color="0x343434"/>
+				</s:LinearGradient>
+			</s:backgroundFill>	
+		<s:HSlider id="scrub" y="10" width="85%" height="20" change="hslider1_changeHandler(event)"
+				   dataTipFormatFunction="timeToString" horizontalCenter="-1" liveDragging="true"
+				   maximum="{data.mixLen}" minimum="0"/>
+			<s:HGroup y="45" width="80%" height="56" horizontalAlign="center" horizontalCenter="0"
+					  textAlign="center" verticalAlign="middle">
+				<s:Label id="runTime" x="-6" width="85" color="#FFFFFF" text="00:00:00"  fontFamily="BebasNeueCFF"/>
+				<s:Spacer width="27%" height="25"/>
+				<s:ToggleButton id="pauseButton" width="50" height="50"
+								click="pauseButton_clickHandler(event)" enabled="true"
+								skinClass="customSkin.imageButton"
+								creationComplete="pauseButton_creationCompleteHandler(event)"
+								includeIn="normal"/>
+				<s:BusyIndicator includeIn="buffering" symbolColor="white"/>
+				<s:Spacer width="27%" height="25"/>
+				<s:Label id="endTime" x="298" width="87" color="#FFFFFF" text="{timeToString(data.mixLen)}" fontFamily="BebasNeueCFF" />
+			</s:HGroup>
+		
+		</s:BorderContainer>
+	</s:VGroup>
+	
+	
+</s:View>
+

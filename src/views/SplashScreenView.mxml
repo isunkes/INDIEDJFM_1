@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- containers\mobile\myComponents\MyIOSSplashScreen.mxml -->
+<s:SplashScreenImage xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					 xmlns:s="library://ns.adobe.com/flex/spark">
+	
+	<fx:Script>
+		<![CDATA[
+			// Override getImageClass() to return an image for iOS.
+			override public function getImageClass(aspectRatio:String, dpi:Number, resolution:Number):Class {
+				// Is the application running on iOS?
+				if (Capabilities.version.indexOf("IOS") == 0)
+					return iosImage.source;
+				
+				return super.getImageClass(aspectRatio, dpi, resolution);
+			}
+		]]>
+	</fx:Script>
+	
+	<!-- Default splashscreen image. -->
+	<s:SplashScreenImageSource 
+		source="@Embed('../assets/splashImages/splashIndieDJFM_iOS.png')"  />
+	
+	<s:SplashScreenImageSource 
+		source="@Embed('../assets/splashImages/splashIndieDJFM_iOS.png')"
+		dpi="240" 
+		aspectRatio="portrait"/>
+	
+	
+	
+	<!-- iOS splashscreen image. -->
+	<s:SplashScreenImageSource id="iosImage"
+							   source="@Embed('../assets/splashImages/splashIndieDJFM_iOS.png')"/>
+</s:SplashScreenImage>
